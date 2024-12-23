@@ -7,22 +7,18 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-ENV PYTHONPATH=/app:$PYTHONPATH
+# Настраиваем переменную среды PYTHONPATH
+ENV PYTHONPATH=/app
 
 # Устанавливаем рабочую директорию внутри контейнера
 WORKDIR /opt/outline_bot
 
-# Копируем файл .env в контейнер
-COPY .env /opt/outline_bot/.env
-
-# Копируем файл requirements.txt в рабочую директорию контейнера
+# Копируем файл requirements.txt и устанавливаем зависимости
 COPY requirements.txt /opt/outline_bot/requirements.txt
-
-# Устанавливаем зависимости
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Копируем остальной код в контейнер
+# Копируем весь остальной код в контейнер
 COPY . /opt/outline_bot/
 
 # Определяем команду для запуска бота
-CMD ["python", "main.py"]  # Замените на вашу команду для запуска бота
+CMD ["python", "main.py"]
