@@ -99,7 +99,7 @@ async def add_key(update: Update, context: CallbackContext) -> None:
 async def delete_key(update: Update, context: CallbackContext) -> None:
     """Обработка команды /delete <id>"""
     if len(context.args) < 1:
-        await update.message.reply_text("⚠️ Использование: /rem_limit <имя|id|ключ>")
+        await update.message.reply_text("⚠️ Использование: /delete <имя|id|ключ>")
         return
     
     # Получаем входные данные (имя, ID или ключ)
@@ -141,7 +141,7 @@ async def delete_key(update: Update, context: CallbackContext) -> None:
 async def limit_traffic(update: Update, context: CallbackContext) -> None:
     """Обработка команды /limit, ограничивает трафик до нуля."""
     if len(context.args) < 1:
-        await update.message.reply_text("⚠️ Использование: /rem_limit <имя|id|ключ>")
+        await update.message.reply_text("⚠️ Использование: /limit <имя|id|ключ>")
         return
     
     # Получаем входные данные (имя, ID или ключ)
