@@ -46,12 +46,11 @@ else
 fi
 
 # 5. Сохранение в .env, если данные были введены
-cat <<EOF > "$ENV_FILE"
-OUTLINE_API_URL="$API_URL"
-TELEGRAM_BOT_TOKEN="$TELEGRAM_BOT_TOKEN"
-CERT_SHA256="$CERT_SHA256"
-ALLOWED_USER_ID="$ALLOWED_USER_ID"
-EOF
+# Убираем кавычки вокруг значений
+echo "OUTLINE_API_URL=$API_URL" > "$ENV_FILE"
+echo "TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN" >> "$ENV_FILE"
+echo "CERT_SHA256=$CERT_SHA256" >> "$ENV_FILE"
+echo "ALLOWED_USER_ID=$ALLOWED_USER_ID" >> "$ENV_FILE"
 
 echo "Файл .env успешно создан."
 
