@@ -2,7 +2,7 @@
 
 # Убедитесь, что указали ваш репозиторий
 GITHUB_REPO_URL="https://github.com/B1g-data/outline_bot.git"
-REPO_DIR="/opt/outline-vpn-bot"  # Изменено на /opt/outline-vpn-bot
+REPO_DIR="/opt/outline-vpn-bot"
 
 # Проверяем, что файл access.txt существует
 if [ ! -f /opt/outline/access.txt ]; then
@@ -20,7 +20,10 @@ if [ -z "$apiUrl" ] || [ -z "$certSha256" ]; then
     exit 1
 fi
 
-# Запрашиваем ALLOWED_USER_ID у пользователя
+# Используем /dev/tty для обработки интерактивного ввода
+exec < /dev/tty
+
+# Запрашиваем Telegram User ID у пользователя
 echo "Пожалуйста, укажите ваш Telegram User ID, чтобы ограничить доступ к боту."
 echo "Вы можете найти свой User ID, написав боту: https://t.me/userinfobot или используя другой способ."
 read -p "Введите ваш Telegram User ID: " ALLOWED_USER_ID
@@ -67,7 +70,6 @@ fi
 # Проверка наличия Docker
 if ! command -v docker &> /dev/null; then
     echo "Docker не установлен. Устанавливаем Docker..."
-    # Установка Docker
     curl -fsSL https://get.docker.com -o get-docker.sh
     sudo sh get-docker.sh
     sudo usermod -aG docker $USER
