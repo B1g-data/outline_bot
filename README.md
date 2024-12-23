@@ -14,9 +14,9 @@
 3. Запустите установочный скрипт:
    ```bash
    bash <(curl -s https://raw.githubusercontent.com/B1g-data/outline_bot/refs/heads/main/install_and_run.sh)
-4. Введите свой ID из @userinfobot.
+4. Введите свой ID из [@userinfobot](https://t.me/userinfobot).
 
-5. Введите токен бота, который вы получили от BotFather.
+5. Введите токен бота, который вы получили от [@BotFather](https://t.me/BotFather).
 
 Готово! После запуска контейнера отправьте команду /start вашему боту в Telegram, и можно приступать к использованию.
 
