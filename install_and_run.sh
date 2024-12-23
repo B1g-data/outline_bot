@@ -1,106 +1,63 @@
 #!/bin/bash
 
-# Убедитесь, что указали ваш репозиторий
-GITHUB_REPO_URL="https://github.com/B1g-data/outline_bot.git"
-REPO_DIR="/opt/outline-vpn-bot"
+# Переменные
+REPO_URL="https://github.com/B1g-data/outline_bot.git"  # Замените на URL репозитория
+TARGET_DIR="/opt/outline_bot"
+ENV_FILE="${TARGET_DIR}/.env"
+CONTAINER_NAME="outline_bot"
 
-# Проверяем, что файл access.txt существует
-if [ ! -f /opt/outline/access.txt ]; then
-    echo "Файл /opt/outline/access.txt не найден!"
-    exit 1
-fi
-
-# Чтение данных из access.txt
-apiUrl=$(grep -i "apiUrl" /opt/outline/access.txt | cut -d ":" -f2- | tr -d '[:space:]')
-certSha256=$(grep -i "certSha256" /opt/outline/access.txt | cut -d ":" -f2- | tr -d '[:space:]')
-
-# Проверка на наличие значений
-if [ -z "$apiUrl" ] || [ -z "$certSha256" ]; then
-    echo "Не удалось извлечь apiUrl или certSha256 из файла!"
-    exit 1
-fi
-
-# Запрашиваем ALLOWED_USER_ID у пользователя
-echo "Пожалуйста, укажите ваш Telegram User ID, чтобы ограничить доступ к боту."
-read -p "Введите ваш Telegram User ID: " ALLOWED_USER_ID
-
-# Создание или обновление файла .env
-if [ ! -f .env ]; then
-    echo "Создаём .env файл..."
-    
-    # Запрашиваем токен бота, если он отсутствует
-    read -p "Введите токен вашего Telegram бота: " bot_token
-
-    cat <<EOL > .env
-OUTLINE_API_URL=$apiUrl
-CERT_SHA256=$certSha256
-TELEGRAM_BOT_TOKEN=$bot_token
-ALLOWED_USER_ID=$ALLOWED_USER_ID
-EOL
-
-    echo ".env файл создан с параметрами OUTLINE_API_URL, CERT_SHA256, TELEGRAM_BOT_TOKEN и ALLOWED_USER_ID."
+# 1. Клонирование репозитория
+if [ -d "$TARGET_DIR" ]; then
+  echo "Папка $TARGET_DIR уже существует. Обновление содержимого..."
+  git -C "$TARGET_DIR" pull
 else
-    echo ".env файл уже существует. Проверяем токен и ALLOWED_USER_ID..."
-
-    # Если токен не найден в .env, запрашиваем его
-    if ! grep -q "TELEGRAM_BOT_TOKEN" .env; then
-        echo "Токен Telegram бота не найден в .env."
-        read -p "Введите токен вашего Telegram бота: " bot_token
-        echo "TELEGRAM_BOT_TOKEN=$bot_token" >> .env
-        echo "Токен добавлен в .env."
-    else
-        echo "Токен бота уже присутствует в .env. Используется текущий."
-    fi
-
-    # Если ALLOWED_USER_ID не найден в .env, запрашиваем его
-    if ! grep -q "ALLOWED_USER_ID" .env; then
-        echo "ALLOWED_USER_ID не найден в .env."
-        echo "Добавляем ALLOWED_USER_ID..."
-        echo "ALLOWED_USER_ID=$ALLOWED_USER_ID" >> .env
-        echo "ALLOWED_USER_ID добавлен в .env."
-    else
-        echo "ALLOWED_USER_ID уже присутствует в .env."
-    fi
+  echo "Клонируем репозиторий..."
+  git clone "$REPO_URL" "$TARGET_DIR"
 fi
 
-# Проверка наличия Docker
-if ! command -v docker &> /dev/null; then
-    echo "Docker не установлен. Устанавливаем Docker..."
-    curl -fsSL https://get.docker.com -o get-docker.sh
-    sudo sh get-docker.sh
-    sudo usermod -aG docker $USER
-    echo "Docker успешно установлен. Перезапустите терминал для применения изменений."
-    exit 1
-fi
+# 2. Запрос данных у пользователя
+read -p "Введите ID пользователя: " ALLOWED_USER_ID
+read -p "Введите токен Telegram-бота: " TELEGRAM_BOT_TOKEN
 
-# Клонирование репозитория с кодом бота
-if [ ! -d "$REPO_DIR" ]; then
-    echo "Клонируем репозиторий с GitHub..."
-    git clone "$GITHUB_REPO_URL" "$REPO_DIR"
+# 3. Чтение из access.txt
+ACCESS_FILE="/opt/outline/access.txt"
+if [ -f "$ACCESS_FILE" ]; then
+  API_URL=$(grep -oP '(?<=apiUrl=).*' "$ACCESS_FILE")
+  CERT_SHA256=$(grep -oP '(?<=certSha256=).*' "$ACCESS_FILE")
 else
-    echo "Репозиторий уже клонирован. Обновляем..."
-    cd "$REPO_DIR" && git pull origin main
+  echo "Файл $ACCESS_FILE не найден. Завершение."
+  exit 1
 fi
 
-# Копируем .env в директорию репозитория
-cp .env "$REPO_DIR/.env"
+# 4. Сохранение в .env
+cat <<EOF > "$ENV_FILE"
+OUTLINE_API_URL="$API_URL"
+TELEGRAM_BOT_TOKEN="$TELEGRAM_BOT_TOKEN"
+CERT_SHA256="$CERT_SHA256"
+ALLOWED_USER_ID="$ALLOWED_USER_ID"
+EOF
 
-# Переходим в директорию с кодом бота
-cd "$REPO_DIR"
+echo "Файл .env успешно создан."
 
-# Собираем Docker контейнер
-echo "Собираем Docker контейнер..."
-docker build -t outline-vpn-bot .
+# 5. Сборка Docker-образа
+cd "$TARGET_DIR" || exit 1
+echo "Собираем Docker-образ..."
+docker build -t "$IMAGE_NAME" .
 
-# Останавливаем и удаляем старый контейнер (если существует)
-if [ "$(docker ps -q -f name=outline-vpn-bot)" ]; then
-    echo "Останавливаем и удаляем старый контейнер..."
-    docker stop outline-vpn-bot
-    docker rm outline-vpn-bot
+# 6. Остановка и удаление старого контейнера
+if docker ps -a | grep -q "$CONTAINER_NAME"; then
+  echo "Останавливаем и удаляем старый контейнер..."
+  docker stop "$CONTAINER_NAME"
+  docker rm "$CONTAINER_NAME"
 fi
 
-# Запуск нового контейнера
+# 7. Запуск нового контейнера
 echo "Запускаем новый контейнер..."
-docker run -d --env-file .env --name outline-vpn-bot outline-vpn-bot
+docker run -d --name "$CONTAINER_NAME" --env-file "$ENV_FILE" "$IMAGE_NAME"
 
-echo "Бот успешно обновлен и запущен в контейнере!"
+if [ $? -eq 0 ]; then
+  echo "Контейнер $CONTAINER_NAME успешно запущен."
+else
+  echo "Ошибка запуска контейнера."
+  exit 1
+fi
