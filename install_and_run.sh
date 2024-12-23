@@ -1,10 +1,7 @@
 #!/bin/bash
 
-set -e  # Останавливаем скрипт при ошибке
-set -o pipefail  # Учитываем ошибки в конвейерах
-
 # Убедитесь, что указали ваш репозиторий
-GITHUB_REPO_URL="https://github.com/B1g-data/outline_bot.git"
+GITHUB_REPO_URL="https://github.com/username/repository.git"
 REPO_DIR="/opt/outline-vpn-bot"
 
 # Проверяем, что файл access.txt существует
@@ -23,20 +20,9 @@ if [ -z "$apiUrl" ] || [ -z "$certSha256" ]; then
     exit 1
 fi
 
-# Отладка для проверки значений
-echo "Извлечённый API URL: $apiUrl"
-echo "Извлечённый certSha256: $certSha256"
-
-# Запрашиваем Telegram User ID у пользователя
-exec < /dev/tty
+# Запрашиваем ALLOWED_USER_ID у пользователя
 echo "Пожалуйста, укажите ваш Telegram User ID, чтобы ограничить доступ к боту."
 read -p "Введите ваш Telegram User ID: " ALLOWED_USER_ID
-
-# Проверка ввода пользователя
-if [ -z "$ALLOWED_USER_ID" ]; then
-    echo "Telegram User ID не может быть пустым!"
-    exit 1
-fi
 
 # Создание или обновление файла .env
 if [ ! -f .env ]; then
@@ -44,11 +30,6 @@ if [ ! -f .env ]; then
     
     # Запрашиваем токен бота, если он отсутствует
     read -p "Введите токен вашего Telegram бота: " bot_token
-
-    if [ -z "$bot_token" ]; then
-        echo "Токен Telegram бота не может быть пустым!"
-        exit 1
-    fi
 
     cat <<EOL > .env
 OUTLINE_API_URL=$apiUrl
@@ -92,13 +73,20 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-# Переходим в директорию с кодом бота
-if [ -d "$REPO_DIR" ]; then
-    cd "$REPO_DIR"
+# Клонирование репозитория с кодом бота
+if [ ! -d "$REPO_DIR" ]; then
+    echo "Клонируем репозиторий с GitHub..."
+    git clone "$GITHUB_REPO_URL" "$REPO_DIR"
 else
-    echo "Директория $REPO_DIR не найдена!"
-    exit 1
+    echo "Репозиторий уже клонирован. Обновляем..."
+    cd "$REPO_DIR" && git pull origin main
 fi
+
+# Копируем .env в директорию репозитория
+cp .env "$REPO_DIR/.env"
+
+# Переходим в директорию с кодом бота
+cd "$REPO_DIR"
 
 # Собираем Docker контейнер
 echo "Собираем Docker контейнер..."
