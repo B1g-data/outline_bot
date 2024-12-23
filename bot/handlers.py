@@ -27,8 +27,6 @@ async def start(update: Update, context: CallbackContext) -> None:
 
     await update.message.reply_text(escaped_text, parse_mode='MarkdownV2')
 
-
-
 @restricted
 async def list_keys(update: Update, context: CallbackContext) -> None:
     """Обработка команды /list"""
@@ -96,20 +94,6 @@ async def add_key(update: Update, context: CallbackContext) -> None:
         await update.message.reply_text("⚠️ Ошибка при создании ключа. Проверьте настройки клиента.", parse_mode='Markdown')
     except Exception as e:
         await update.message.reply_text("⚠️ Произошла ошибка при создании нового ключа.", parse_mode='Markdown')
-
-@restricted
-async def delete_key(update: Update, context: CallbackContext) -> None:
-    """Обработка команды /delete <id>"""
-    if len(context.args) != 1:
-        await update.message.reply_text("⚠️ Использование: /delete <id>")
-        return
-
-    key_id = context.args[0]
-    try:
-        outline_client.delete_key(key_id)  
-        await update.message.reply_text(f"✅ Ключ с ID {key_id} успешно удалён.")
-    except Exception as e:
-        await update.message.reply_text("⚠️ Произошла ошибка при удалении ключа.")
 
 @restricted
 async def delete_key(update: Update, context: CallbackContext) -> None:
