@@ -77,15 +77,6 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-# Клонирование репозитория с кодом бота (или обновление, если он уже существует)
-if [ ! -d "$REPO_DIR" ]; then
-    echo "Клонируем репозиторий с GitHub..."
-    git clone "$GITHUB_REPO_URL" "$REPO_DIR"
-else
-    echo "Репозиторий уже клонирован. Обновляем..."
-    cd "$REPO_DIR" && git pull origin main
-fi
-
 # Переходим в директорию с кодом бота
 cd "$REPO_DIR"
 
