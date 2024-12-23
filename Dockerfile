@@ -10,9 +10,6 @@ RUN apt-get update && apt-get install -y \
 # Устанавливаем рабочую директорию внутри контейнера
 WORKDIR /opt
 
-# Клонируем репозиторий с кодом бота
-RUN git clone https://github.com/your-username/your-repository.git /opt/outline-vpn-bot
-
 # Переходим в директорию с кодом бота
 WORKDIR /opt/outline-vpn-bot
 
