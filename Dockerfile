@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
+ENV PYTHONPATH=/app:$PYTHONPATH
+
 # Устанавливаем рабочую директорию внутри контейнера
 WORKDIR /opt/outline_bot
 
