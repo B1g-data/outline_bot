@@ -5,6 +5,7 @@ REPO_URL="https://github.com/B1g-data/outline_bot.git"  # Замените на 
 TARGET_DIR="/opt/outline_bot"
 ENV_FILE="${TARGET_DIR}/.env"
 CONTAINER_NAME="outline_bot"
+IMAGE_NAME="outline_bot_image"  # Имя Docker-образа
 
 # 1. Клонирование репозитория
 if [ -d "$TARGET_DIR" ]; then
