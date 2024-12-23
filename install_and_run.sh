@@ -29,8 +29,9 @@ read -p "Введите токен Telegram-бота: " TELEGRAM_BOT_TOKEN
 # 4. Чтение из access.txt
 ACCESS_FILE="/opt/outline/access.txt"
 if [ -f "$ACCESS_FILE" ]; then
-  API_URL=$(grep -oP '(?<=apiUrl=).*' "$ACCESS_FILE")
-  CERT_SHA256=$(grep -oP '(?<=certSha256=).*' "$ACCESS_FILE")
+  # Извлечение значений с использованием ":" в качестве разделителя
+  API_URL=$(grep -oP '(?<=apiUrl:).*' "$ACCESS_FILE")
+  CERT_SHA256=$(grep -oP '(?<=certSha256:).*' "$ACCESS_FILE")
 else
   echo "Файл $ACCESS_FILE не найден. Завершение."
   exit 1
