@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Убедитесь, что указали ваш репозиторий
-GITHUB_REPO_URL="https://github.com/username/repository.git"
+GITHUB_REPO_URL="https://github.com/B1g-data/outline_bot.git"
 REPO_DIR="/opt/outline-vpn-bot"
 
 # Проверяем, что файл access.txt существует
