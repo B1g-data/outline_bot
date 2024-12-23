@@ -22,9 +22,17 @@ else
   git clone "$REPO_URL" "$TARGET_DIR"
 fi
 
-# 3. Запрос данных у пользователя
-read -p "Введите ID пользователя: " ALLOWED_USER_ID
-read -p "Введите токен Telegram-бота: " TELEGRAM_BOT_TOKEN
+# 3. Проверка наличия .env файла и сохранённых переменных
+if [ -f "$ENV_FILE" ]; then
+  # Чтение сохраненных данных из .env
+  source "$ENV_FILE"
+  echo "Найден файл .env. Используем сохраненные значения."
+else
+  # Запрос данных у пользователя, если .env файл не существует
+  echo "Файл .env не найден. Запрашиваем данные у пользователя..."
+  read -p "Введите ID пользователя: " ALLOWED_USER_ID
+  read -p "Введите токен Telegram-бота: " TELEGRAM_BOT_TOKEN
+fi
 
 # 4. Чтение из access.txt
 ACCESS_FILE="/opt/outline/access.txt"
@@ -37,7 +45,7 @@ else
   exit 1
 fi
 
-# 5. Сохранение в .env
+# 5. Сохранение в .env, если данные были введены
 cat <<EOF > "$ENV_FILE"
 OUTLINE_API_URL="$API_URL"
 TELEGRAM_BOT_TOKEN="$TELEGRAM_BOT_TOKEN"
