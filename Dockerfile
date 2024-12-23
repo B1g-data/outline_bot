@@ -8,17 +8,19 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Устанавливаем рабочую директорию внутри контейнера
-WORKDIR /opt
-
-# Переходим в директорию с кодом бота
-WORKDIR /opt/outline-vpn-bot
+WORKDIR /opt/outline_bot
 
 # Копируем файл .env в контейнер
-COPY .env /opt/outline-vpn-bot/.env
+COPY .env /opt/outline_bot/.env
 
-# Устанавливаем зависимости (если есть requirements.txt)
-COPY requirements.txt .
+# Копируем файл requirements.txt в рабочую директорию контейнера
+COPY requirements.txt /opt/outline_bot/requirements.txt
+
+# Устанавливаем зависимости
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Команда для запуска вашего скрипта
-CMD ["bash", "your-script.sh"]
+# Копируем остальной код в контейнер
+COPY . /opt/outline_bot/
+
+# Определяем команду для запуска бота
+CMD ["python", "main.py"]  # Замените на вашу команду для запуска бота
