@@ -18,7 +18,7 @@ def main():
     """Запуск бота"""
     application = Application.builder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 
-    application.job_queue.run_once(update_keys())
+    application.job_queue.run_once(update_keys(), 0)
 
     # Добавляем обработчики команд
     application.add_handler(CommandHandler("start", start))
