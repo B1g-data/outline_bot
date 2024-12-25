@@ -29,8 +29,8 @@ async def start(update: Update, context: CallbackContext) -> None:
     text = (
         "<b>Добро пожаловать!</b> Я бот для управления сервером Outline.""\n\n"
         "📝 <i>Доступные команды:</i>""\n\n"
-        "🚀 <code>/start</code> - Показать ещё раз набор доступных команд.""\n\n"
-        "🔑 <code>/list</code> - Показать все ключи.""\n\n"
+        "🚀 <b>/start</b> - Показать ещё раз набор доступных команд.""\n\n"
+        "🔑 <b>/list</b> - Показать все ключи.""\n\n"
         "➕ <code>/add </code>&lt;имя&gt; - Добавить новый ключ. Если имя не указано, будет использовано значение по умолчанию.""\n\n"
         "❌ <code>/delete </code>&lt;имя|id|ключ&gt; - Удалить ключ.""\n\n"
         "📊 <code>/limit </code>&lt;имя|id|ключ&gt; - Ограничить трафик до нуля для выбранного ключа.""\n\n"
@@ -38,7 +38,7 @@ async def start(update: Update, context: CallbackContext) -> None:
     )
 
     await update.message.reply_text(text, parse_mode='HTML')
-    await update_keys()
+    update_keys()
 
 
 @restricted
@@ -49,6 +49,7 @@ async def list_keys(update: Update, context: CallbackContext) -> None:
     # Если это команда /list, используем message, иначе используем callback_query
     if update.message:
         message = update.message
+        update_keys()
 
     elif query:
         message = query.message
@@ -142,7 +143,7 @@ async def add_key(update: Update, context: CallbackContext) -> None:
             "Вы можете использовать этот ключ для подключения к Outline. "
             "Сохраните его в безопасном месте! 🛡️"
         )
-        await update_keys()
+        update_keys()
         await update.message.reply_html(message)  # Использование HTML разметки
     except AttributeError as e:
         await update.message.reply_html("⚠️ Ошибка при создании ключа. Проверьте настройки клиента.")
@@ -233,7 +234,7 @@ async def limit_traffic(update: Update, context: CallbackContext) -> None:
             status = outline_client.add_data_limit(key.key_id, 0)
             if status:
                 await update.message.reply_text(f"✅ Трафик для ключа {key.key_id} ограничен до нуля.")
-                await update_keys()
+                update_keys()
         else:
             await update.message.reply_text("⚠️ Ключ не найден. Проверьте правильность введённых данных.")
     
@@ -280,7 +281,7 @@ async def remove_limit(update: Update, context: CallbackContext) -> None:
             status = outline_client.delete_data_limit(key.key_id)  # Используем функцию delete_data_limit для снятия лимита
             if status:
                 await update.message.reply_text(f"✅ Лимит на трафик для ключа {key.key_id} снят.")
-                await update_keys()
+                update_keys()
         else:
             await update.message.reply_text("⚠️ Ключ не найден. Проверьте правильность введённых данных.")
     
