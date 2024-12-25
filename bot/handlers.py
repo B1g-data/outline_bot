@@ -9,7 +9,9 @@ from telegram.ext import CallbackContext
 # Инициализация клиента OutlineAPI
 outline_client = OutlineVPN(OUTLINE_API_URL, CERT_SHA256)
 
-async def update_keys():
+keys = []
+
+def update_keys():
     """Функция для обновления ключей"""
     try:
         # Получаем новые ключи
@@ -47,7 +49,7 @@ async def list_keys(update: Update, context: CallbackContext) -> None:
     # Если это команда /list, используем message, иначе используем callback_query
     if update.message:
         message = update.message
-        
+
     elif query:
         message = query.message
 

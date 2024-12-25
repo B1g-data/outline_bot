@@ -18,8 +18,6 @@ def main():
     """Запуск бота"""
     application = Application.builder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 
-    application.job_queue.run_once(update_keys(), 0)
-
     # Добавляем обработчики команд
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("list", list_keys))
@@ -30,6 +28,8 @@ def main():
 
     # Обработчик для нажатий на кнопки пагинации
     application.add_handler(CallbackQueryHandler(handle_pagination, pattern="^list_"))
+
+    update_keys() # Обновляем ключи
 
     # Запуск бота
     logger.info("Bot is running...")
