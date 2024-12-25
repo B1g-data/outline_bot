@@ -1,7 +1,7 @@
 import logging
 import os
 from telegram.ext import Application, CommandHandler
-from bot.handlers import start, list_keys, add_key, delete_key, limit_traffic, remove_limit
+from bot.handlers import start, list_keys, add_key, delete_key, limit_traffic, remove_limit, update_keys
 from dotenv import load_dotenv
 
 # Загружаем переменные окружения из .env файла
@@ -17,6 +17,8 @@ from bot.handlers import start, list_keys, add_key, delete_key, limit_traffic, r
 def main():
     """Запуск бота"""
     application = Application.builder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
+
+    application.job_queue.run_once(update_keys())
 
     # Добавляем обработчики команд
     application.add_handler(CommandHandler("start", start))
