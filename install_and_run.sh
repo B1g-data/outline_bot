@@ -7,6 +7,23 @@ ENV_FILE="${TARGET_DIR}/.env"
 CONTAINER_NAME="tg_outline_bot"
 IMAGE_NAME="tg_outline_bot_image"  # Имя Docker-образа
 
+# Функция для удаления установленных компонентов при прерывании скрипта
+cleanup() {
+  echo "Прерывание скрипта. Удаляем установленные компоненты..."
+  if [ -d "$TARGET_DIR" ]; then
+    echo "Удаляем репозиторий..."
+    rm -rf "$TARGET_DIR"
+  fi
+  if docker ps -a | grep -q "$CONTAINER_NAME"; then
+    echo "Останавливаем и удаляем контейнер..."
+    docker stop "$CONTAINER_NAME" && docker rm "$CONTAINER_NAME"
+  fi
+  exit 1
+}
+
+# Обработчик прерывания (Ctrl+C)
+trap cleanup INT
+
 # Проверка наличия необходимых утилит
 for cmd in git docker grep curl; do
   if ! command -v $cmd &>/dev/null; then
@@ -47,10 +64,10 @@ fi
 # 2. Клонирование репозитория
 if [ -d "$TARGET_DIR/.git" ]; then
   echo "Папка $TARGET_DIR уже содержит репозиторий. Обновление содержимого..."
-  git -C "$TARGET_DIR" pull || { echo "Ошибка обновления репозитория"; exit 1; }
+  git -C "$TARGET_DIR" pull || { echo "Ошибка обновления репозитория"; }
 else
   echo "Клонируем репозиторий..."
-  git clone "$REPO_URL" "$TARGET_DIR" || { echo "Ошибка клонирования репозитория"; exit 1; }
+  git clone "$REPO_URL" "$TARGET_DIR" || { echo "Ошибка клонирования репозитория"; }
 fi
 
 # 3. Проверка наличия .env файла и сохранённых переменных
@@ -61,62 +78,40 @@ if [ -f "$ENV_FILE" ]; then
 else
   # Запрос данных у пользователя, если .env файл не существует
   echo "Файл .env не найден. Требуются данные от пользователя."
-  read -p "Введите ID пользователя: " ALLOWED_USER_ID
-  read -p "Введите токен Telegram-бота: " TELEGRAM_BOT_TOKEN
+
+  # Запрашиваем корректные данные до тех пор, пока не будут введены правильные значения
+  while true; do
+    read -p "Введите ID пользователя: " ALLOWED_USER_ID
+    if validate_user_id "$ALLOWED_USER_ID"; then
+      echo "ID пользователя корректен. Проверяем его наличие..."
+      if validate_user_exists "$ALLOWED_USER_ID"; then
+        echo "Пользователь с ID $ALLOWED_USER_ID существует."
+        break
+      else
+        echo "Ошибка: Пользователь с ID $ALLOWED_USER_ID не найден. Попробуйте снова."
+      fi
+    else
+      echo "Ошибка: Неверный формат ID пользователя. Попробуйте снова."
+    fi
+  done
+
+  while true; do
+    read -p "Введите токен Telegram-бота: " TELEGRAM_BOT_TOKEN
+    if validate_token_format "$TELEGRAM_BOT_TOKEN"; then
+      echo "Формат токена правильный. Проверяем его..."
+      if validate_telegram_token "$TELEGRAM_BOT_TOKEN"; then
+        echo "Токен действителен!"
+        break
+      else
+        echo "Ошибка: Токен неверный или недействителен. Попробуйте снова."
+      fi
+    else
+      echo "Ошибка: Токен имеет неверный формат. Попробуйте снова."
+    fi
+  done
 fi
 
-# 4. Проверка формата токена
-validate_token_format() {
-  local token=$1
-  if [[ "$token" =~ ^[0-9]{9,15}:[A-Za-z0-9_-]{35,45}$ ]]; then
-    return 0  # Токен соответствует формату
-  else
-    return 1  # Неверный формат
-  fi
-}
-
-# 5. Проверка действительности токена через Telegram API
-validate_telegram_token() {
-  local token=$1
-  response=$(curl -s "https://api.telegram.org/bot$token/getMe")
-  if [[ "$response" =~ "\"ok\":true" ]]; then
-    return 0  # Токен действителен
-  else
-    return 1  # Токен неверный
-  fi
-}
-
-# 6. Проверка токена
-if validate_token_format "$TELEGRAM_BOT_TOKEN"; then
-  echo "Формат токена правильный. Проверяем его..."
-  if validate_telegram_token "$TELEGRAM_BOT_TOKEN"; then
-    echo "Токен действителен!"
-  else
-    echo "Ошибка: Токен неверный или недействителен."
-    exit 1
-  fi
-else
-  echo "Ошибка: Токен имеет неверный формат."
-  exit 1
-fi
-
-# 7. Проверка формата ID пользователя
-if validate_user_id "$ALLOWED_USER_ID"; then
-  echo "ID пользователя корректен. Проверяем его наличие..."
-  
-  # Проверка существования пользователя
-  if validate_user_exists "$ALLOWED_USER_ID"; then
-    echo "Пользователь с ID $ALLOWED_USER_ID существует."
-  else
-    echo "Ошибка: Пользователь с ID $ALLOWED_USER_ID не найден."
-    exit 1
-  fi
-else
-  echo "Ошибка: Неверный формат ID пользователя."
-  exit 1
-fi
-
-# 8. Чтение из access.txt
+# 4. Чтение из access.txt
 ACCESS_FILE="/opt/outline/access.txt"
 if [ -f "$ACCESS_FILE" ]; then
   # Извлечение значений с использованием ":" в качестве разделителя
@@ -124,10 +119,10 @@ if [ -f "$ACCESS_FILE" ]; then
   CERT_SHA256=$(grep -oP '(?<=certSha256:).*' "$ACCESS_FILE")
 else
   echo "Файл $ACCESS_FILE не найден. Завершение. Возможно, outline не установлен или установлен не стандартным способом."
-  exit 1
+  cleanup
 fi
 
-# 9. Сохранение в .env, если данные были введены
+# 5. Сохранение в .env, если данные были введены
 echo "OUTLINE_API_URL=$API_URL" > "$ENV_FILE"
 echo "TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN" >> "$ENV_FILE"
 echo "CERT_SHA256=$CERT_SHA256" >> "$ENV_FILE"
@@ -135,20 +130,19 @@ echo "ALLOWED_USER_ID=$ALLOWED_USER_ID" >> "$ENV_FILE"
 
 echo "Файл .env успешно создан."
 
-# 10. Сборка Docker-образа
-cd "$TARGET_DIR" || { echo "Ошибка при переходе в директорию $TARGET_DIR"; exit 1; }
+# 6. Сборка Docker-образа
+cd "$TARGET_DIR" || { echo "Ошибка при переходе в директорию $TARGET_DIR"; cleanup; }
 echo "Собираем Docker-образ..."
-docker build -t "$IMAGE_NAME" . || { echo "Ошибка сборки Docker-образа"; exit 1; }
+docker build -t "$IMAGE_NAME" . || { echo "Ошибка сборки Docker-образа"; cleanup; }
 
-# 11. Остановка и удаление старого контейнера
+# 7. Остановка и удаление старого контейнера
 if docker ps -a | grep -q "$CONTAINER_NAME"; then
   echo "Останавливаем и удаляем старый контейнер..."
-  docker stop "$CONTAINER_NAME" || { echo "Ошибка остановки контейнера"; exit 1; }
-  docker rm "$CONTAINER_NAME" || { echo "Ошибка удаления контейнера"; exit 1; }
+  docker stop "$CONTAINER_NAME" && docker rm "$CONTAINER_NAME" || { echo "Ошибка остановки и удаления контейнера"; cleanup; }
 fi
 
-# 12. Запуск нового контейнера
+# 8. Запуск нового контейнера
 echo "Запускаем новый контейнер..."
-docker run -d --name "$CONTAINER_NAME" --env-file "$ENV_FILE" "$IMAGE_NAME" || { echo "Ошибка запуска контейнера"; exit 1; }
+docker run -d --name "$CONTAINER_NAME" --env-file "$ENV_FILE" "$IMAGE_NAME" || { echo "Ошибка запуска контейнера"; cleanup; }
 
 echo "Контейнер $CONTAINER_NAME успешно запущен."
