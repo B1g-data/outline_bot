@@ -3,9 +3,22 @@ from telegram.ext import CallbackContext
 from .outline_api import OutlineVPN
 from .config import OUTLINE_API_URL, CERT_SHA256
 from .utils import restricted  # Импорт декоратора
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import CallbackContext
 
 # Инициализация клиента OutlineAPI
 outline_client = OutlineVPN(OUTLINE_API_URL, CERT_SHA256)
+
+async def update_keys():
+    """Функция для обновления ключей"""
+    try:
+        # Получаем новые ключи
+        global keys
+        keys = outline_client.get_keys()
+       
+        print("Ключи обновлены.")
+    except Exception as e:
+        print(f"Ошибка при обновлении ключей: {e}")
 
 @restricted
 async def start(update: Update, context: CallbackContext) -> None:
@@ -23,58 +36,85 @@ async def start(update: Update, context: CallbackContext) -> None:
     )
 
     await update.message.reply_text(text, parse_mode='HTML')
+    await update_keys()
+
 
 @restricted
 async def list_keys(update: Update, context: CallbackContext) -> None:
-    """Обработка команды /list"""
+    query = update.callback_query
+    message = None
+
+    # Если это команда /list, используем message, иначе используем callback_query
+    if update.message:
+        message = update.message
+        
+    elif query:
+        message = query.message
+
     try:
-        keys = outline_client.get_keys()
         if not keys:
-            await update.message.reply_text("🔓 Нет доступных ключей.", parse_mode='HTML')
+            await message.reply_text("🔓 Нет доступных ключей.", parse_mode='HTML')
             return
 
-        message = "🔑 <b>Список ключей:</b>\n\n"
-        messages = []  # Список сообщений для отправки
+        # Параметры пагинации
+        limit = 5  # Количество ключей на одной странице
 
-        # Формируем строку для каждого ключа
-        for key in keys:
+        # Обработка offset в случае нажатия на кнопку
+        offset = int(query.data.split('_')[1]) if query else (int(context.args[0]) if context.args else 0)
+
+        # Вычисляем подсписок ключей, соответствующих текущей странице
+        paginated_keys = keys[offset:offset + limit]
+
+        if not paginated_keys:
+            await message.reply_text("🔓 Нет доступных ключей на этой странице.", parse_mode='HTML')
+            return
+
+        # Формируем сообщение с ключами
+        message_text = "🔑 <b>Список ключей:</b>\n\n"
+        message_parts = []
+        for key in paginated_keys:
             key_id = getattr(key, "key_id", "Не указан")
             name = getattr(key, "name", "Без имени")
-            data_limit = (
-                getattr(key, "data_limit", "No limit")
-                if getattr(key, "data_limit", None) is not None
-                else "No limit"
-            )
+            data_limit = getattr(key, "data_limit", "No limit") if getattr(key, "data_limit", None) else "No limit"
             access_url = getattr(key, "access_url", "Не указано")
 
-            key_message = (
+            message_parts.append(
                 f"<b>- ID:</b> {key_id},\n"
                 f"<b>- Имя:</b> {name},\n"
                 f"<b>- Трафик:</b> {data_limit},\n"
                 f"<b>🔗</b> <code>{access_url}</code>\n\n"
             )
 
-            # Если длина сообщения превышает 4096 символов, сохраняем это сообщение в список
-            if len(message) + len(key_message) > 4000:
-                messages.append(message)  # Добавляем в список сообщение до достижения лимита
-                message = "🔑 <b>Список ключей:</b>\n\n"  # Начинаем новый блок сообщения
+        message_text += "".join(message_parts)
 
-            message += key_message
+        # Создаем кнопки для пагинации
+        keyboard = []
+        if offset > 0:
+            keyboard.append([InlineKeyboardButton("Назад", callback_data=f"list_{offset - limit}")])
 
-        # Добавляем оставшееся сообщение
-        if message:
-            messages.append(message)
+        if offset + limit < len(keys):
+            keyboard.append([InlineKeyboardButton("Вперед", callback_data=f"list_{offset + limit}")])
 
-        # Отправляем все сообщения
-        for msg in messages:
-            print(msg)
-            await update.message.reply_text(msg, parse_mode='HTML')
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        # Если это команда /list, отправляем новое сообщение с текстом и кнопками
+        if not query:
+            await message.reply_text(message_text, parse_mode='HTML', reply_markup=reply_markup)
+        # Если это нажатие кнопки, обновляем существующее сообщение
+        else:
+            await message.edit_text(message_text, parse_mode='HTML', reply_markup=reply_markup)
 
     except Exception as e:
-        await update.message.reply_text(
+        await message.reply_text(
             f"⚠️ <b>Произошла ошибка при получении списка ключей:</b> {e}", 
             parse_mode='HTML'
         )
+
+
+@restricted
+# Обработчик для пагинации (обработка кнопок)
+async def handle_pagination(update: Update, context: CallbackContext):
+    await list_keys(update, context)
 
 
 @restricted
@@ -100,6 +140,7 @@ async def add_key(update: Update, context: CallbackContext) -> None:
             "Вы можете использовать этот ключ для подключения к Outline. "
             "Сохраните его в безопасном месте! 🛡️"
         )
+        await update_keys()
         await update.message.reply_html(message)  # Использование HTML разметки
     except AttributeError as e:
         await update.message.reply_html("⚠️ Ошибка при создании ключа. Проверьте настройки клиента.")
@@ -146,6 +187,7 @@ async def delete_key(update: Update, context: CallbackContext) -> None:
             status = outline_client.delete_key(key.key_id)  
             if status:
                 await update.message.reply_text(f"✅ Ключ с ID {key.key_id} успешно удалён.")
+                await update_keys()
     except Exception as e:
         await update.message.reply_text("⚠️ Произошла ошибка при удалении ключа.")
 
@@ -189,6 +231,7 @@ async def limit_traffic(update: Update, context: CallbackContext) -> None:
             status = outline_client.add_data_limit(key.key_id, 0)
             if status:
                 await update.message.reply_text(f"✅ Трафик для ключа {key.key_id} ограничен до нуля.")
+                await update_keys()
         else:
             await update.message.reply_text("⚠️ Ключ не найден. Проверьте правильность введённых данных.")
     
@@ -235,6 +278,7 @@ async def remove_limit(update: Update, context: CallbackContext) -> None:
             status = outline_client.delete_data_limit(key.key_id)  # Используем функцию delete_data_limit для снятия лимита
             if status:
                 await update.message.reply_text(f"✅ Лимит на трафик для ключа {key.key_id} снят.")
+                await update_keys()
         else:
             await update.message.reply_text("⚠️ Ключ не найден. Проверьте правильность введённых данных.")
     

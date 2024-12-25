@@ -11,9 +11,11 @@ load_dotenv()
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler
+from bot.handlers import start, list_keys, add_key, delete_key, limit_traffic, remove_limit, handle_pagination
+
 def main():
     """Запуск бота"""
-    # Создаем экземпляр приложения с токеном Telegram
     application = Application.builder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 
     # Добавляем обработчики команд
@@ -23,6 +25,9 @@ def main():
     application.add_handler(CommandHandler("delete", delete_key))
     application.add_handler(CommandHandler("limit", limit_traffic))
     application.add_handler(CommandHandler("rem_limit", remove_limit))
+
+    # Обработчик для нажатий на кнопки пагинации
+    application.add_handler(CallbackQueryHandler(handle_pagination, pattern="^list_"))
 
     # Запуск бота
     logger.info("Bot is running...")
