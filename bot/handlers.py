@@ -18,7 +18,6 @@ def update_keys():
         global keys
         keys = outline_client.get_keys()
        
-        print("Ключи обновлены.")
     except Exception as e:
         print(f"Ошибка при обновлении ключей: {e}")
 

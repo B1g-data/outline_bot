@@ -1,4 +1,3 @@
-import logging
 import os
 from telegram.ext import Application, CommandHandler
 from bot.handlers import start, list_keys, add_key, delete_key, limit_traffic, remove_limit, update_keys
@@ -6,10 +5,6 @@ from dotenv import load_dotenv
 
 # Загружаем переменные окружения из .env файла
 load_dotenv()
-
-# Настройка логирования
-logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 from bot.handlers import start, list_keys, add_key, delete_key, limit_traffic, remove_limit, handle_pagination
@@ -32,7 +27,6 @@ def main():
     update_keys() # Обновляем ключи
 
     # Запуск бота
-    logger.info("Bot is running...")
     application.run_polling()
 
 if __name__ == '__main__':
