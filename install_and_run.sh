@@ -117,15 +117,21 @@ else
   exit 1
 fi
 
-# 5. Чтение из access.txt
+# 5. Чтение из access.txt или запрос данных
 ACCESS_FILE="/opt/outline/access.txt"
 if [ -f "$ACCESS_FILE" ]; then
   # Извлечение значений с использованием ":" в качестве разделителя
   API_URL=$(grep -oP '(?<=apiUrl:).*' "$ACCESS_FILE")
   CERT_SHA256=$(grep -oP '(?<=certSha256:).*' "$ACCESS_FILE")
+  if [ -z "$API_URL" ] || [ -z "$CERT_SHA256" ]; then
+    echo "Не все данные найдены в файле access.txt. Запрашиваем недостающие значения."
+    read -p "Введите API URL: " API_URL
+    read -p "Введите SHA256 сертификата: " CERT_SHA256
+  fi
 else
-  echo "Файл $ACCESS_FILE не найден. Завершение. Возможно, outline не установлен или установлен не стандартным способом."
-  exit 1
+  echo "Файл $ACCESS_FILE не найден. Запрашиваем значения."
+  read -p "Введите API URL: " API_URL
+  read -p "Введите SHA256 сертификата: " CERT_SHA256
 fi
 
 # 6. Сохранение в .env, если данные были введены
