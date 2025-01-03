@@ -1,11 +1,13 @@
-# Используем официальный образ Python 3.13 на базе Debian Slim
-FROM python:3.13-slim
+# Используем официальный образ Python 3.13 на базе Alpine
+FROM python:3.13-alpine
 
-# Устанавливаем необходимые зависимости и очищаем кэш apt
-RUN apt-get update && apt-get install --no-install-recommends -y \
+# Устанавливаем необходимые зависимости и очищаем кэш
+RUN apk update && apk add --no-cache \
     git \
     curl \
-    && rm -rf /var/lib/apt/lists/*
+    build-base \
+    libmagic \
+    && rm -rf /var/cache/apk/*
 
 # Настроим переменную среды PYTHONPATH
 ENV PYTHONPATH=/app
