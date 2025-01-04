@@ -156,6 +156,5 @@ fi
 
 # 9. Запуск нового контейнера
 echo "Запускаем новый контейнер..."
-docker run -d --name "$CONTAINER_NAME" --env-file "$ENV_FILE" "$IMAGE_NAME" || { echo "Ошибка запуска контейнера"; exit 1; }
-
+docker run -d --name "$CONTAINER_NAME" --restart always --env-file "$ENV_FILE" "$IMAGE_NAME" || { echo "Ошибка запуска контейнера"; exit 1; }
 echo "Контейнер $CONTAINER_NAME успешно запущен."
