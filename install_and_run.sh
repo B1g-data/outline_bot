@@ -82,11 +82,11 @@ if [ -f "$ENV_FILE" ]; then
 else
   # Запрос данных у пользователя, если .env файл не существует
   echo "Файл .env не найден. Требуются данные от пользователя."
-  read -p "Введите ID пользователя: " ALLOWED_USER_ID
+  read -p "Введите ID пользователя (https://t.me/userinfobot): " ALLOWED_USER_ID
 
   # Цикл запроса токена, пока он не будет правильным
   while true; do
-    read -p "Введите токен Telegram-бота: " TELEGRAM_BOT_TOKEN
+    read -p "Введите токен Telegram-бота (https://t.me/BotFather): " TELEGRAM_BOT_TOKEN
     if validate_token_format "$TELEGRAM_BOT_TOKEN"; then
       echo "Формат токена правильный. Проверяем его..."
       if validate_telegram_token "$TELEGRAM_BOT_TOKEN"; then
