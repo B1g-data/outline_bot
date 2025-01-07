@@ -27,7 +27,7 @@ read -p "Выберите действие (1 или 2): " ACTION
 if [[ "$ACTION" == "1" ]]; then
   download_and_execute "$REPO_URL/update_container.sh" "update_container.sh"
 elif [[ "$ACTION" == "2" ]]; then
-  download_and_execute "$REPO_URL/create_container.sh" "create_container.sh"
+  download_and_execute "$REPO_URL/setup_container.sh" "setup_container.sh"
 else
   echo "Некорректный выбор. Завершаем работу."
   exit 1
