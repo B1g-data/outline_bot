@@ -13,7 +13,7 @@
 
 3. Запустите установочный скрипт:
    ```bash
-   bash <(curl -s https://raw.githubusercontent.com/B1g-data/outline_bot/refs/heads/main/install_and_run.sh)
+   bash <(curl -s https://raw.githubusercontent.com/B1g-data/outline_bot/refs/heads/main/main.sh)
    ```
 4. Введите свой ID из [@userinfobot](https://t.me/userinfobot).
 
