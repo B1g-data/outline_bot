@@ -35,8 +35,10 @@ if [[ "$ACTION" == "1" ]]; then
   rm -rf "$NEW_DIR"
   git clone -b "$BRANCH" --single-branch "$REPO_URL" "$NEW_DIR" || { echo "Ошибка клонирования репозитория"; exit 1; }
 
-  # Не обновляем Dockerfile при обновлении контейнера
+  # Обновляем Dockerfile только для существующего контейнера
   echo "Репозиторий успешно обновлен."
+
+  # Устанавливаем суффикс как пустое значение для обновления
   SUFFIX=""
 
 elif [[ "$ACTION" == "2" ]]; then
@@ -104,11 +106,18 @@ fi
 
 # Сборка и запуск контейнера
 cd "$NEW_DIR" || { echo "Ошибка перехода в директорию $NEW_DIR"; exit 1; }
-IMAGE_NAME="tg_outline_bot_${SUFFIX}"
+
+# Используем имя контейнера при обновлении, а при создании - с суффиксом
+if [[ -z "$SUFFIX" ]]; then
+  IMAGE_NAME="tg_outline_bot"
+else
+  IMAGE_NAME="tg_outline_bot_${SUFFIX}"
+fi
+
 echo "Собираем Docker-образ..."
 docker build -t "$IMAGE_NAME" . || { echo "Ошибка сборки Docker-образа"; exit 1; }
 
 echo "Запускаем контейнер..."
-docker run -d --name "tg_outline_bot_${SUFFIX}" --restart always --env-file "$ENV_FILE" "$IMAGE_NAME" || { echo "Ошибка запуска контейнера"; exit 1; }
+docker run -d --name "$IMAGE_NAME" --restart always --env-file "$ENV_FILE" "$IMAGE_NAME" || { echo "Ошибка запуска контейнера"; exit 1; }
 
-echo "Контейнер tg_outline_bot_${SUFFIX} успешно запущен."
+echo "Контейнер $IMAGE_NAME успешно запущен."
