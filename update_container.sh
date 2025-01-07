@@ -24,10 +24,17 @@ if ! echo "$CONTAINERS" | grep -q "^$CONTAINER_NAME$"; then
   exit 1
 fi
 
-# Клонирование репозитория в существующую папку
+# Определение директории для репозитория
 NEW_DIR="/opt/${CONTAINER_NAME}"
-echo "Клонируем репозиторий в $NEW_DIR..."
-git pull origin "$BRANCH" || { echo "Ошибка обновления репозитория"; exit 1; }
+
+# Проверка, существует ли репозиторий в указанной директории
+if [ -d "$NEW_DIR/.git" ]; then
+  echo "Папка $NEW_DIR уже содержит репозиторий. Обновление содержимого..."
+  git -C "$NEW_DIR" pull origin "$BRANCH" || { echo "Ошибка обновления репозитория"; exit 1; }
+else
+  echo "Клонируем репозиторий в $NEW_DIR..."
+  git clone -b "$BRANCH" --single-branch "$REPO_URL" "$NEW_DIR" || { echo "Ошибка клонирования репозитория"; exit 1; }
+fi
 
 echo "Репозиторий успешно обновлен."
 
@@ -42,3 +49,4 @@ echo "Запускаем контейнер..."
 docker run -d --name "$IMAGE_NAME" --restart always --env-file "$ENV_FILE" "$IMAGE_NAME" || { echo "Ошибка запуска контейнера"; exit 1; }
 
 echo "Контейнер $IMAGE_NAME успешно запущен."
+
