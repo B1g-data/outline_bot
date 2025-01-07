@@ -1,12 +1,21 @@
 #!/bin/bash
 
-# Получаем имя нового контейнера как параметр
-NEW_CONTAINER_NAME=$1
-if [ -z "$NEW_CONTAINER_NAME" ]; then
-  echo "Не указано имя нового контейнера."
-  exit 1
+# Запрос пользователя, генерировать ли суффикс автоматически
+read -p "Хотите сгенерировать суффикс автоматически? (y/n): " generate_suffix
+if [[ "$generate_suffix" == "y" || "$generate_suffix" == "Y" ]]; then
+  SUFFIX=$(date +%Y%m%d%H%M%S)  # Генерация суффикса на основе текущей даты и времени
+  echo "Сгенерированный суффикс: $SUFFIX"
+else
+  # Запрос суффикса для контейнера и директории
+  read -p "Введите суффикс для контейнера и директории: " SUFFIX
+  if [ -z "$SUFFIX" ]; then
+    echo "Не указан суффикс. Выход..."
+    exit 1
+  fi
 fi
 
+# Формируем имя нового контейнера и директории
+NEW_CONTAINER_NAME="tg_outline_bot_$SUFFIX"
 NEW_DIR="/opt/$NEW_CONTAINER_NAME"
 REPO_URL="https://github.com/B1g-data/outline_bot.git"
 ENV_FILE="$NEW_DIR/.env"
