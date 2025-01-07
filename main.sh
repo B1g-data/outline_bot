@@ -65,22 +65,42 @@ else
 fi
 
 # Создание .env файла
+# Путь к предполагаемому .env файлу
 ENV_FILE="$NEW_DIR/.env"
-if [ -f "$NEW_DIR/access.txt" ]; then
-  read -p "Файл access.txt найден. Хотите извлечь данные оттуда? (y/n): " USE_ACCESS
-  if [[ "$USE_ACCESS" == "y" ]]; then
-    API_URL=$(grep -oP '(?<=apiUrl:).*' "$NEW_DIR/access.txt")
-    CERT_SHA256=$(grep -oP '(?<=certSha256:).*' "$NEW_DIR/access.txt")
+
+if [ -f "$ENV_FILE" ]; then
+  echo "Найден существующий .env файл."
+  read -p "Использовать данные из него? (y/n): " USE_EXISTING_ENV
+  if [[ "$USE_EXISTING_ENV" =~ ^[Yy]$ ]]; then
+    echo "Используем существующий .env файл."
   else
+    echo "Запрашиваем новые данные для .env файла."
+    # Запрос новых данных
     read -p "Введите API URL: " API_URL
     read -p "Введите SHA256 сертификата: " CERT_SHA256
+    read -p "Введите токен Telegram-бота (https://t.me/BotFather): " TELEGRAM_BOT_TOKEN
+    read -p "Введите ID пользователя (https://t.me/userinfobot): " ALLOWED_USER_ID
+    # Создание нового .env файла
+    echo "OUTLINE_API_URL=$API_URL" > "$ENV_FILE"
+    echo "CERT_SHA256=$CERT_SHA256" >> "$ENV_FILE"
+    echo "TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN" >> "$ENV_FILE"
+    echo "ALLOWED_USER_ID=$ALLOWED_USER_ID" >> "$ENV_FILE"
+    echo "Новый .env файл создан."
   fi
 else
+  echo "Файл .env не найден. Запрашиваем данные для его создания."
+  # Запрос данных для нового файла
   read -p "Введите API URL: " API_URL
   read -p "Введите SHA256 сертификата: " CERT_SHA256
+  read -p "Введите токен Telegram-бота (https://t.me/BotFather): " TELEGRAM_BOT_TOKEN
+  read -p "Введите ID пользователя (https://t.me/userinfobot): " ALLOWED_USER_ID
+  # Создание нового .env файла
+  echo "OUTLINE_API_URL=$API_URL" > "$ENV_FILE"
+  echo "CERT_SHA256=$CERT_SHA256" >> "$ENV_FILE"
+  echo "TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN" >> "$ENV_FILE"
+  echo "ALLOWED_USER_ID=$ALLOWED_USER_ID" >> "$ENV_FILE"
+  echo "Новый .env файл создан."
 fi
-echo "OUTLINE_API_URL=$API_URL" > "$ENV_FILE"
-echo "CERT_SHA256=$CERT_SHA256" >> "$ENV_FILE"
 
 # Запрос токена бота и ID пользователя
 while true; do
