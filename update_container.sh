@@ -36,6 +36,11 @@ fi
 
 echo "Вы выбрали контейнер: $CONTAINER_NAME"
 
+# Остановка и удаление старого контейнера
+echo "Останавливаем и удаляем старый контейнер: $CONTAINER_NAME..."
+docker stop "$CONTAINER_NAME" || { echo "Ошибка остановки контейнера $CONTAINER_NAME"; exit 1; }
+docker rm "$CONTAINER_NAME" || { echo "Ошибка удаления контейнера $CONTAINER_NAME"; exit 1; }
+
 # Определение директории для репозитория
 NEW_DIR="/opt/${CONTAINER_NAME}"
 
@@ -53,11 +58,10 @@ echo "Репозиторий успешно обновлен."
 # Сборка и запуск контейнера
 cd "$NEW_DIR" || { echo "Ошибка перехода в директорию $NEW_DIR"; exit 1; }
 
-IMAGE_NAME="${CONTAINER_NAME}_image"
 echo "Собираем Docker-образ..."
-docker build -t "$IMAGE_NAME" . || { echo "Ошибка сборки Docker-образа"; exit 1; }
+docker build -t "$CONTAINER_NAME" . || { echo "Ошибка сборки Docker-образа"; exit 1; }
 
 echo "Запускаем контейнер..."
-docker run -d --name "$IMAGE_NAME" --restart always --env-file "$ENV_FILE" "$IMAGE_NAME" || { echo "Ошибка запуска контейнера"; exit 1; }
+docker run -d --name "$CONTAINER_NAME" --restart always --env-file "$ENV_FILE" "$CONTAINER_NAME" || { echo "Ошибка запуска контейнера"; exit 1; }
 
-echo "Контейнер $IMAGE_NAME успешно запущен."
+echo "Контейнер $CONTAINER_NAME успешно запущен."
