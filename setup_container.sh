@@ -23,32 +23,28 @@ ENV_FILE="$NEW_DIR/.env"
 # Создаем новую папку
 mkdir -p "$NEW_DIR"
 
-# Проверка, существует ли репозиторий в директории
-if [ -d "$NEW_DIR/.git" ]; then
-  echo "Репозиторий уже существует в директории $NEW_DIR. Обновляем содержимое..."
-  git -C "$NEW_DIR" pull || { echo "Ошибка обновления репозитория"; exit 1; }
-else
-  echo "Клонируем репозиторий в $NEW_DIR..."
-  git clone "$REPO_URL" "$NEW_DIR" || { echo "Ошибка клонирования репозитория"; exit 1; }
-fi
-
-# Создаем .env файл
-read -p "Хотите извлечь данные из файла access.txt (y/n)? " extract_from_file
-if [[ "$extract_from_file" == "y" || "$extract_from_file" == "Y" ]]; then
-  if [ -f "$NEW_DIR/access.txt" ]; then
+# Проверка на наличие файла access.txt
+if [ -f "$NEW_DIR/access.txt" ]; then
+  read -p "Хотите извлечь данные из файла access.txt (y/n)? " extract_from_file
+  if [[ "$extract_from_file" == "y" || "$extract_from_file" == "Y" ]]; then
     API_URL=$(grep -oP '(?<=apiUrl:).*' "$NEW_DIR/access.txt")
     CERT_SHA256=$(grep -oP '(?<=certSha256:).*' "$NEW_DIR/access.txt")
     echo "OUTLINE_API_URL=$API_URL" > "$ENV_FILE"
     echo "CERT_SHA256=$CERT_SHA256" >> "$ENV_FILE"
-  else
-    echo "Файл access.txt не найден."
-    exit 1
   fi
 else
-  read -p "Введите API URL: " API_URL
-  read -p "Введите SHA256 сертификата: " CERT_SHA256
-  echo "OUTLINE_API_URL=$API_URL" > "$ENV_FILE"
-  echo "CERT_SHA256=$CERT_SHA256" >> "$ENV_FILE"
+  echo "Файл access.txt не найден."
+  read -p "Продолжить с ручным вводом данных? (y/n): " continue_manual
+  if [[ "$continue_manual" == "y" || "$continue_manual" == "Y" ]]; then
+    # Запрос API URL и SHA256 сертификата
+    read -p "Введите API URL: " API_URL
+    read -p "Введите SHA256 сертификата: " CERT_SHA256
+    echo "OUTLINE_API_URL=$API_URL" > "$ENV_FILE"
+    echo "CERT_SHA256=$CERT_SHA256" >> "$ENV_FILE"
+  else
+    echo "Выход из скрипта."
+    exit 1
+  fi
 fi
 
 # Запрос токена и ID пользователя
