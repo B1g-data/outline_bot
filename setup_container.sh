@@ -45,22 +45,6 @@ validate_telegram_token() {
   fi
 }
 
-# Цикл запроса токена, пока он не будет правильным
-while true; do
-  read -p "Введите токен Telegram-бота (формат: 1234567890:ABCDEFghijklMNOpqrsTUVwxYz-1234abcde): " TELEGRAM_BOT_TOKEN
-  if validate_token_format "$TELEGRAM_BOT_TOKEN"; then
-    echo "Формат токена правильный. Проверяем его... "
-    if validate_telegram_token "$TELEGRAM_BOT_TOKEN"; then
-      echo "Токен действителен!"
-      break  # Прерываем цикл, если токен действителен
-    else
-      echo "Ошибка: Токен неверный или недействителен. Попробуйте снова."
-    fi
-  else
-    echo "Ошибка: Токен имеет неверный формат. Попробуйте снова."
-  fi
-done
-
 # Запрос суффикса
 read -p "Хотите сгенерировать суффикс автоматически? (y/n): " generate_suffix
 if [[ "$generate_suffix" == "y" || "$generate_suffix" == "Y" ]]; then
@@ -123,6 +107,22 @@ else
   echo "CERT_SHA256=$CERT_SHA256" >> "$ENV_FILE"
 fi
 
+# Цикл запроса токена, пока он не будет правильным
+while true; do
+  read -p "Введите токен Telegram-бота (формат: 1234567890:ABCDEFghijklMNOpqrsTUVwxYz-1234abcde): " TELEGRAM_BOT_TOKEN
+  if validate_token_format "$TELEGRAM_BOT_TOKEN"; then
+    echo "Формат токена правильный. Проверяем его... "
+    if validate_telegram_token "$TELEGRAM_BOT_TOKEN"; then
+      echo "Токен действителен!"
+      break  # Прерываем цикл, если токен действителен
+    else
+      echo "Ошибка: Токен неверный или недействителен. Попробуйте снова."
+    fi
+  else
+    echo "Ошибка: Токен имеет неверный формат. Попробуйте снова."
+  fi
+done
+
 # 4. Проверка формата ID пользователя
 while true; do
   read -p "Введите ID пользователя: " ALLOWED_USER_ID
@@ -138,6 +138,10 @@ while true; do
     echo "Ошибка: Неверный формат ID пользователя. Используйте только цифры."
   fi
 done
+
+# Добавление данных в .env
+echo "TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN" >> "$ENV_FILE"
+echo "ALLOWED_USER_ID=$ALLOWED_USER_ID" >> "$ENV_FILE"
 
 # Обновляем Dockerfile
 echo "Обновляем Dockerfile..."
