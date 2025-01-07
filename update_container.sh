@@ -27,7 +27,7 @@ fi
 # Клонирование репозитория в существующую папку
 NEW_DIR="/opt/${CONTAINER_NAME}"
 echo "Клонируем репозиторий в $NEW_DIR..."
-git pull -b "$BRANCH" --single-branch "$REPO_URL" "$NEW_DIR" || { echo "Ошибка клонирования репозитория"; exit 1; }
+git pull origin "$BRANCH" || { echo "Ошибка обновления репозитория"; exit 1; }
 
 echo "Репозиторий успешно обновлен."
 
