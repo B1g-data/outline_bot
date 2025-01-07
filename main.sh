@@ -35,9 +35,8 @@ if [[ "$ACTION" == "1" ]]; then
   rm -rf "$NEW_DIR"
   git clone -b "$BRANCH" --single-branch "$REPO_URL" "$NEW_DIR" || { echo "Ошибка клонирования репозитория"; exit 1; }
 
-  # Обновление Dockerfile
-  echo "Обновляем Dockerfile..."
-  sed -i "s|WORKDIR /opt/.*|WORKDIR $NEW_DIR|g" "$NEW_DIR/Dockerfile"
+  # Не обновляем Dockerfile при обновлении контейнера
+  echo "Репозиторий успешно обновлен."
 
 elif [[ "$ACTION" == "2" ]]; then
   # Создание нового контейнера
@@ -55,7 +54,7 @@ elif [[ "$ACTION" == "2" ]]; then
   rm -rf "$NEW_DIR"
   git clone -b "$BRANCH" --single-branch "$REPO_URL" "$NEW_DIR" || { echo "Ошибка клонирования репозитория"; exit 1; }
 
-  # Обновление Dockerfile
+  # Обновление Dockerfile только для нового контейнера
   echo "Обновляем Dockerfile..."
   sed -i "s|WORKDIR /opt/.*|WORKDIR $NEW_DIR|g" "$NEW_DIR/Dockerfile"
 
@@ -101,30 +100,6 @@ else
   echo "ALLOWED_USER_ID=$ALLOWED_USER_ID" >> "$ENV_FILE"
   echo "Новый .env файл создан."
 fi
-
-# Запрос токена бота и ID пользователя
-while true; do
-  read -p "Введите токен Telegram-бота: " TELEGRAM_BOT_TOKEN
-  if [[ "$TELEGRAM_BOT_TOKEN" =~ ^[0-9]{9,15}:[A-Za-z0-9_-]{35,45}$ ]]; then
-    echo "Формат токена правильный."
-    break
-  else
-    echo "Ошибка: Неверный формат токена. Попробуйте снова."
-  fi
-done
-
-while true; do
-  read -p "Введите ID пользователя: " USER_ID
-  if [[ "$USER_ID" =~ ^[0-9]+$ ]]; then
-    echo "ID пользователя корректен."
-    break
-  else
-    echo "Ошибка: Некорректный ID пользователя."
-  fi
-done
-
-echo "TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN" >> "$ENV_FILE"
-echo "ALLOWED_USER_ID=$USER_ID" >> "$ENV_FILE"
 
 # Сборка и запуск контейнера
 cd "$NEW_DIR" || { echo "Ошибка перехода в директорию $NEW_DIR"; exit 1; }
