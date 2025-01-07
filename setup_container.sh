@@ -1,5 +1,25 @@
 #!/bin/bash
 
+# Функция проверки формата URL
+validate_url() {
+  local url=$1
+  if [[ "$url" =~ ^https?://[a-zA-Z0-9.-]+(\:[0-9]+)?(/.*)?$ ]]; then
+    return 0  # URL корректен
+  else
+    return 1  # Неверный URL
+  fi
+}
+
+# Функция проверки формата SHA256
+validate_sha256() {
+  local sha256=$1
+  if [[ "$sha256" =~ ^[a-fA-F0-9]{64}$ ]]; then
+    return 0  # SHA256 корректен
+  else
+    return 1  # Неверный формат SHA256
+  fi
+}
+
 # Функция проверки формата ID пользователя
 validate_user_id() {
   local user_id=$1
@@ -82,8 +102,26 @@ if [ -f "$ACCESS_FILE" ]; then
 else
   echo "Файл access.txt не найден."
   # Запрос API URL и SHA256 сертификата
-  read -p "Введите API URL (например, https://example.com): " API_URL
-  read -p "Введите SHA256 сертификата: " CERT_SHA256
+  while true; do
+    read -p "Введите API URL (например, https://example.com): " API_URL
+    if validate_url "$API_URL"; then
+      echo "API URL корректен."
+      break  # Прерываем цикл, если URL корректен
+    else
+      echo "Ошибка: Неверный формат API URL. Попробуйте снова."
+    fi
+  done
+
+  while true; do
+    read -p "Введите SHA256 сертификата (64 символа): " CERT_SHA256
+    if validate_sha256 "$CERT_SHA256"; then
+      echo "SHA256 корректен."
+      break  # Прерываем цикл, если SHA256 корректен
+    else
+      echo "Ошибка: Неверный формат SHA256. Попробуйте снова."
+    fi
+  done
+
   echo "OUTLINE_API_URL=$API_URL" > "$ENV_FILE"
   echo "CERT_SHA256=$CERT_SHA256" >> "$ENV_FILE"
 fi
