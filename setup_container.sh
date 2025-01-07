@@ -19,12 +19,13 @@ NEW_CONTAINER_NAME="tg_outline_bot_$SUFFIX"
 NEW_DIR="/opt/$NEW_CONTAINER_NAME"
 REPO_URL="https://github.com/B1g-data/outline_bot.git"
 ENV_FILE="$NEW_DIR/.env"
+ACCESS_FILE="opt/outline/access.txt"
 
 # Создаем новую папку
 mkdir -p "$NEW_DIR"
 
 # Проверка на наличие файла access.txt
-if [ -f "$NEW_DIR/access.txt" ]; then
+if [ -f $ACCESS_FILE ]; then
   read -p "Хотите извлечь данные из файла access.txt (y/n)? " extract_from_file
   if [[ "$extract_from_file" == "y" || "$extract_from_file" == "Y" ]]; then
     API_URL=$(grep -oP '(?<=apiUrl:).*' "$NEW_DIR/access.txt")
@@ -34,17 +35,11 @@ if [ -f "$NEW_DIR/access.txt" ]; then
   fi
 else
   echo "Файл access.txt не найден."
-  read -p "Продолжить с ручным вводом данных? (y/n): " continue_manual
-  if [[ "$continue_manual" == "y" || "$continue_manual" == "Y" ]]; then
-    # Запрос API URL и SHA256 сертификата
-    read -p "Введите API URL: " API_URL
-    read -p "Введите SHA256 сертификата: " CERT_SHA256
-    echo "OUTLINE_API_URL=$API_URL" > "$ENV_FILE"
-    echo "CERT_SHA256=$CERT_SHA256" >> "$ENV_FILE"
-  else
-    echo "Выход из скрипта."
-    exit 1
-  fi
+  # Запрос API URL и SHA256 сертификата
+  read -p "Введите API URL: " API_URL
+  read -p "Введите SHA256 сертификата: " CERT_SHA256
+  echo "OUTLINE_API_URL=$API_URL" > "$ENV_FILE"
+  echo "CERT_SHA256=$CERT_SHA256" >> "$ENV_FILE"
 fi
 
 # Запрос токена и ID пользователя
@@ -56,7 +51,7 @@ echo "TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN" >> "$ENV_FILE"
 
 # Обновляем Dockerfile
 echo "Обновляем Dockerfile..."
-sed -i "s|/opt/tg_outline_bot|$NEW_DIR|g" "$NEW_DIR/Dockerfile"
+sed -i "s|$NEW_DIR|g" "$NEW_DIR/Dockerfile"
 
 # Сборка Docker-образа
 cd "$NEW_DIR" || { echo "Ошибка при переходе в директорию $NEW_DIR"; exit 1; }
