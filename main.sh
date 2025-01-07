@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # URL репозитория для скачивания
-REPO_URL="https://raw.githubusercontent.com/B1g-data/outline_bot/test"
+REPO_URL="https://github.com/B1g-data/outline_bot.git"
+BRANCH="test"
 
 # Запрос действия у пользователя
 echo "Что вы хотите сделать?"
@@ -32,7 +33,7 @@ if [[ "$ACTION" == "1" ]]; then
   NEW_DIR="/opt/${CONTAINER_NAME}"
   echo "Клонируем репозиторий в $NEW_DIR..."
   rm -rf "$NEW_DIR"
-  git clone "$REPO_URL" "$NEW_DIR" || { echo "Ошибка клонирования репозитория"; exit 1; }
+  git clone -b "$BRANCH" --single-branch "$REPO_URL" "$NEW_DIR" || { echo "Ошибка клонирования репозитория"; exit 1; }
 
   # Обновление Dockerfile
   echo "Обновляем Dockerfile..."
@@ -52,7 +53,7 @@ elif [[ "$ACTION" == "2" ]]; then
   NEW_DIR="/opt/tg_outline_bot_${SUFFIX}"
   echo "Клонируем репозиторий в $NEW_DIR..."
   rm -rf "$NEW_DIR"
-  git clone "$REPO_URL" "$NEW_DIR" || { echo "Ошибка клонирования репозитория"; exit 1; }
+  git clone -b "$BRANCH" --single-branch "$REPO_URL" "$NEW_DIR" || { echo "Ошибка клонирования репозитория"; exit 1; }
 
   # Обновление Dockerfile
   echo "Обновляем Dockerfile..."
