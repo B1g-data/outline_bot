@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # URL репозитория для скачивания
-REPO_URL="https://raw.githubusercontent.com/B1g-data/outline_bot/test"
+REPO_URL="https://raw.githubusercontent.com/B1g-data/outline_bot/master"
 
 # Функция отката изменений
 rollback() {
