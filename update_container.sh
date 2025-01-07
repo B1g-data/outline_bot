@@ -16,13 +16,25 @@ if [ -z "$CONTAINERS" ]; then
 fi
 
 echo "Список существующих контейнеров:"
-echo "$CONTAINERS"
-read -p "Введите имя контейнера, который хотите обновить: " CONTAINER_NAME
+# Нумерация контейнеров
+index=1
+for CONTAINER in $CONTAINERS; do
+  echo "$index. $CONTAINER"
+  ((index++))
+done
 
-if ! echo "$CONTAINERS" | grep -q "^$CONTAINER_NAME$"; then
-  echo "Контейнер с именем $CONTAINER_NAME не найден."
+# Запрос номера контейнера
+read -p "Введите номер контейнера, который хотите обновить: " CONTAINER_NUMBER
+
+# Поиск имени контейнера по номеру
+CONTAINER_NAME=$(echo "$CONTAINERS" | sed -n "${CONTAINER_NUMBER}p")
+
+if [ -z "$CONTAINER_NAME" ]; then
+  echo "Неверный номер контейнера."
   exit 1
 fi
+
+echo "Вы выбрали контейнер: $CONTAINER_NAME"
 
 # Определение директории для репозитория
 NEW_DIR="/opt/${CONTAINER_NAME}"
@@ -32,7 +44,7 @@ if [ -d "$NEW_DIR/.git" ]; then
   echo "Папка $NEW_DIR уже содержит репозиторий. Обновление содержимого..."
   git -C "$NEW_DIR" pull origin "$BRANCH" || { echo "Ошибка обновления репозитория"; exit 1; }
 else
-  echo "Клонируем репозиторий в $NEW_DIR..."
+  echo "Папка $NEW_DIR не содержит репозитория. Клонируем репозиторий..."
   git clone -b "$BRANCH" --single-branch "$REPO_URL" "$NEW_DIR" || { echo "Ошибка клонирования репозитория"; exit 1; }
 fi
 
@@ -49,4 +61,3 @@ echo "Запускаем контейнер..."
 docker run -d --name "$IMAGE_NAME" --restart always --env-file "$ENV_FILE" "$IMAGE_NAME" || { echo "Ошибка запуска контейнера"; exit 1; }
 
 echo "Контейнер $IMAGE_NAME успешно запущен."
-
