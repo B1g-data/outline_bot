@@ -75,7 +75,7 @@ git clone "$REPO_URL" "$NEW_DIR" || { echo "Ошибка клонировани�
 
 # Проверка на наличие файла access.txt
 if [ -f "$ACCESS_FILE" ]; then
-  read -p "Хотите извлечь данные из файла access.txt (y/n)? " extract_from_file
+  read -p "Хотите извлечь данные из файла access.txt (данные Outline данного сервера) (y/n)? " extract_from_file
   if [[ "$extract_from_file" == "y" || "$extract_from_file" == "Y" ]]; then
     API_URL=$(grep -oP '(?<=apiUrl:).*' "$ACCESS_FILE")
     CERT_SHA256=$(grep -oP '(?<=certSha256:).*' "$ACCESS_FILE")
@@ -84,9 +84,10 @@ if [ -f "$ACCESS_FILE" ]; then
   fi
 else
   echo "Файл access.txt не найден."
+  echo "Найдите данные в ином пути или на другом Вашем сервере по пути opt/outline/access.txt"
   # Запрос API URL и SHA256 сертификата
   while true; do
-    read -p "Введите API URL (например, https://example.com): " API_URL
+    read -p "Введите API URL (например, https://https://11.111.111.11:11111/eeexAAAmppLe.com): " API_URL
     if [[ "$API_URL" =~ ^https?:// ]]; then
       break
     else
@@ -95,7 +96,7 @@ else
   done
   
   while true; do
-    read -p "Введите SHA256 сертификата: " CERT_SHA256
+    read -p "Введите SHA256 сертификата (64 символа): " CERT_SHA256
     if [[ "$CERT_SHA256" =~ ^[a-fA-F0-9]{64}$ ]]; then
       break
     else
@@ -109,7 +110,7 @@ fi
 
 # Цикл запроса токена, пока он не будет правильным
 while true; do
-  read -p "Введите токен Telegram-бота (формат: 1234567890:ABCDEFghijklMNOpqrsTUVwxYz-1234abcde): " TELEGRAM_BOT_TOKEN
+  read -p "Введите токен Telegram-бота (Узнать - https://t.me/BotFather) (формат: 1234567890:ABCDEFghijklMNOpqrsTUVwxYz-1234abcde): " TELEGRAM_BOT_TOKEN
   if validate_token_format "$TELEGRAM_BOT_TOKEN"; then
     echo "Формат токена правильный. Проверяем его... "
     if validate_telegram_token "$TELEGRAM_BOT_TOKEN"; then
@@ -125,7 +126,7 @@ done
 
 # 4. Проверка формата ID пользователя
 while true; do
-  read -p "Введите ID пользователя: " ALLOWED_USER_ID
+  read -p "Введите ID пользователя (Узнать - https://t.me/userinfobot): " ALLOWED_USER_ID
   if validate_user_id "$ALLOWED_USER_ID"; then
     echo "ID пользователя корректен. Проверяем его наличие..."
     if validate_user_exists "$ALLOWED_USER_ID"; then
