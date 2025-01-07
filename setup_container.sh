@@ -20,6 +20,7 @@ NEW_DIR="/opt/$NEW_CONTAINER_NAME"
 REPO_URL="https://github.com/B1g-data/outline_bot.git"
 ENV_FILE="$NEW_DIR/.env"
 ACCESS_FILE="opt/outline/access.txt"
+OLD_DIR="/opt/tg_outline_bot"
 
 # Создаем новую папку
 mkdir -p "$NEW_DIR"
@@ -51,7 +52,7 @@ echo "TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN" >> "$ENV_FILE"
 
 # Обновляем Dockerfile
 echo "Обновляем Dockerfile..."
-sed -i "s|$NEW_DIR|g" "$NEW_DIR/Dockerfile"
+sed -i "s|$OLD_DIR|$NEW_DIR|g" "$NEW_DIR/Dockerfile"
 
 # Сборка Docker-образа
 cd "$NEW_DIR" || { echo "Ошибка при переходе в директорию $NEW_DIR"; exit 1; }
