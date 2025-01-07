@@ -18,6 +18,9 @@ rollback() {
   exit 1
 }
 
+# Устанавливаем обработчик сигналов
+trap 'rollback' SIGINT SIGTERM
+
 # Функция проверки формата ID пользователя
 validate_user_id() {
   local user_id=$1
