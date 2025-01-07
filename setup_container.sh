@@ -1,5 +1,23 @@
 #!/bin/bash
 
+# Функция отката изменений
+rollback() {
+  echo "Произошла ошибка. Выполняем откат изменений..."
+  if [ -d "$NEW_DIR" ]; then
+    echo "Удаляем директорию $NEW_DIR..."
+    rm -rf "$NEW_DIR"
+  fi
+  if [ -f "$ENV_FILE" ]; then
+    echo "Удаляем файл $ENV_FILE..."
+    rm -f "$ENV_FILE"
+  fi
+  if [ -f "$NEW_CONTAINER_NAME" ]; then
+    echo "Удаляем контейнер $NEW_CONTAINER_NAME..."
+    docker rm -f "$NEW_CONTAINER_NAME" || true
+  fi
+  exit 1
+}
+
 # Функция проверки формата ID пользователя
 validate_user_id() {
   local user_id=$1
@@ -54,7 +72,7 @@ else
   read -p "Введите суффикс для контейнера и директории: " SUFFIX
   if [ -z "$SUFFIX" ]; then
     echo "Не указан суффикс. Выход..."
-    exit 1
+    rollback  # Откат
   fi
 fi
 
@@ -67,11 +85,11 @@ ACCESS_FILE="/opt/outline/access.txt"
 OLD_DIR="/opt/tg_outline_bot"
 
 # Создаем новую папку
-mkdir -p "$NEW_DIR"
+mkdir -p "$NEW_DIR" || rollback  # Откат, если ошибка
 
 # Клонируем репозиторий
 echo "Клонируем репозиторий в $NEW_DIR..."
-git clone "$REPO_URL" "$NEW_DIR" || { echo "Ошибка клонирования репозитория"; exit 1; }
+git clone "$REPO_URL" "$NEW_DIR" || rollback  # Откат, если ошибка
 
 # Проверка на наличие файла access.txt
 if [ -f "$ACCESS_FILE" ]; then
@@ -146,16 +164,16 @@ echo "ALLOWED_USER_ID=$ALLOWED_USER_ID" >> "$ENV_FILE"
 
 # Обновляем Dockerfile
 echo "Обновляем Dockerfile..."
-sed -i "s|$OLD_DIR|$NEW_DIR|g" "$NEW_DIR/Dockerfile"
+sed -i "s|$OLD_DIR|$NEW_DIR|g" "$NEW_DIR/Dockerfile" || rollback  # Откат, если ошибка
 
 # Сборка Docker-образа
-cd "$NEW_DIR" || { echo "Ошибка при переходе в директорию $NEW_DIR"; exit 1; }
-docker build -t "$NEW_CONTAINER_NAME" . || { echo "Ошибка сборки Docker-образа"; exit 1; }
+cd "$NEW_DIR" || rollback  # Откат, если ошибка
+docker build -t "$NEW_CONTAINER_NAME" . || rollback  # Откат, если ошибка
 
 echo "Docker-образ для контейнера $NEW_CONTAINER_NAME успешно собран."
 
 # Запуск контейнера
 echo "Запускаем контейнер $NEW_CONTAINER_NAME..."
-docker run -d --name "$NEW_CONTAINER_NAME" --env-file "$ENV_FILE" "$NEW_CONTAINER_NAME" || { echo "Ошибка запуска контейнера"; exit 1; }
+docker run -d --name "$NEW_CONTAINER_NAME" --env-file "$ENV_FILE" "$NEW_CONTAINER_NAME" || rollback  # Откат, если ошибка
 
 echo "Контейнер $NEW_CONTAINER_NAME успешно запущен."
