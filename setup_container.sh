@@ -25,6 +25,10 @@ OLD_DIR="/opt/tg_outline_bot"
 # Создаем новую папку
 mkdir -p "$NEW_DIR"
 
+# Клонируем репозиторий
+echo "Клонируем репозиторий в $NEW_DIR..."
+git clone "$REPO_URL" "$NEW_DIR" || { echo "Ошибка клонирования репозитория"; exit 1; }
+
 # Проверка на наличие файла access.txt
 if [ -f $ACCESS_FILE ]; then
   read -p "Хотите извлечь данные из файла access.txt (y/n)? " extract_from_file
