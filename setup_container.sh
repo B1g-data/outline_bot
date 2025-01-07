@@ -1,25 +1,5 @@
 #!/bin/bash
 
-# Функция проверки формата URL
-validate_url() {
-  local url=$1
-  if [[ "$url" =~ ^https?://[a-zA-Z0-9.-]+(\:[0-9]+)?(/.*)?$ ]]; then
-    return 0  # URL корректен
-  else
-    return 1  # Неверный URL
-  fi
-}
-
-# Функция проверки формата SHA256
-validate_sha256() {
-  local sha256=$1
-  if [[ "$sha256" =~ ^[a-fA-F0-9]{64}$ ]]; then
-    return 0  # SHA256 корректен
-  else
-    return 1  # Неверный формат SHA256
-  fi
-}
-
 # Функция проверки формата ID пользователя
 validate_user_id() {
   local user_id=$1
@@ -36,8 +16,11 @@ validate_user_exists() {
   response=$(curl -s "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/getChat?chat_id=$user_id")
   if [[ "$response" =~ "\"ok\":true" ]]; then
     return 0  # Пользователь существует
+  elif [[ "$response" =~ "\"error_code\":404" ]]; then
+    return 1  # Ошибка 404, пользователь не найден
   else
-    return 1  # Пользователь не найден или ошибка
+    echo "Ошибка при проверке пользователя: $response"
+    return 2  # Ошибка API
   fi
 }
 
@@ -61,6 +44,22 @@ validate_telegram_token() {
     return 1  # Токен неверный
   fi
 }
+
+# Цикл запроса токена, пока он не будет правильным
+while true; do
+  read -p "Введите токен Telegram-бота (формат: 1234567890:ABCDEFghijklMNOpqrsTUVwxYz-1234abcde): " TELEGRAM_BOT_TOKEN
+  if validate_token_format "$TELEGRAM_BOT_TOKEN"; then
+    echo "Формат токена правильный. Проверяем его... "
+    if validate_telegram_token "$TELEGRAM_BOT_TOKEN"; then
+      echo "Токен действителен!"
+      break  # Прерываем цикл, если токен действителен
+    else
+      echo "Ошибка: Токен неверный или недействителен. Попробуйте снова."
+    fi
+  else
+    echo "Ошибка: Токен имеет неверный формат. Попробуйте снова."
+  fi
+done
 
 # Запрос суффикса
 read -p "Хотите сгенерировать суффикс автоматически? (y/n): " generate_suffix
@@ -104,21 +103,19 @@ else
   # Запрос API URL и SHA256 сертификата
   while true; do
     read -p "Введите API URL (например, https://example.com): " API_URL
-    if validate_url "$API_URL"; then
-      echo "API URL корректен."
-      break  # Прерываем цикл, если URL корректен
+    if [[ "$API_URL" =~ ^https?:// ]]; then
+      break
     else
-      echo "Ошибка: Неверный формат API URL. Попробуйте снова."
+      echo "Ошибка: Неверный формат URL. Попробуйте снова."
     fi
   done
-
+  
   while true; do
-    read -p "Введите SHA256 сертификата (64 символа): " CERT_SHA256
-    if validate_sha256 "$CERT_SHA256"; then
-      echo "SHA256 корректен."
-      break  # Прерываем цикл, если SHA256 корректен
+    read -p "Введите SHA256 сертификата: " CERT_SHA256
+    if [[ "$CERT_SHA256" =~ ^[a-fA-F0-9]{64}$ ]]; then
+      break
     else
-      echo "Ошибка: Неверный формат SHA256. Попробуйте снова."
+      echo "Ошибка: SHA256 сертификат должен быть длиной 64 символа и состоять только из цифр и букв a-f. Попробуйте снова."
     fi
   done
 
@@ -139,22 +136,6 @@ while true; do
     fi
   else
     echo "Ошибка: Неверный формат ID пользователя. Используйте только цифры."
-  fi
-done
-
-# Цикл запроса токена, пока он не будет правильным
-while true; do
-  read -p "Введите токен Telegram-бота (формат: 1234567890:ABCDEFghijklMNOpqrsTUVwxYz-1234abcde): " TELEGRAM_BOT_TOKEN
-  if validate_token_format "$TELEGRAM_BOT_TOKEN"; then
-    echo "Формат токена правильный. Проверяем его..."
-    if validate_telegram_token "$TELEGRAM_BOT_TOKEN"; then
-      echo "Токен действителен!"
-      break  # Прерываем цикл, если токен действителен
-    else
-      echo "Ошибка: Токен неверный или недействителен. Попробуйте снова."
-    fi
-  else
-    echo "Ошибка: Токен имеет неверный формат. Попробуйте снова."
   fi
 done
 
