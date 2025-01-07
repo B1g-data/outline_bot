@@ -73,7 +73,7 @@ if [ -f "$NEW_DIR/access.txt" ]; then
     CERT_SHA256=$(grep -oP '(?<=certSha256:).*' "$NEW_DIR/access.txt")
   else
     read -p "Введите API URL: " API_URL
-    read -p "Введите SHA256 сертификата: " CERT_SHA256"
+    read -p "Введите SHA256 сертификата: " CERT_SHA256
   fi
 else
   read -p "Введите API URL: " API_URL
