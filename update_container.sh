@@ -2,7 +2,7 @@
 
 # URL репозитория для скачивания
 REPO_URL="https://github.com/B1g-data/outline_bot.git"
-BRANCH="master"
+BRANCH="main"
 TARGET_DIR="/opt/tg_outline_bot"
 ENV_FILE="${TARGET_DIR}/.env"
 
