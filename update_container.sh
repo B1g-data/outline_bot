@@ -11,10 +11,9 @@ CONTAINERS=$(docker ps -a --filter "name=^tg_outline_bot" --format "{{.Names}}")
 
 # Функция отката изменений
 rollback() {
-  echo "Произошла ошибка. Выполняем откат изменений..."
-  if [ -d "$NEW_DIR" ]; then
-    echo "Удаляем репозиторий в директории $NEW_DIR..."
-    rm -rf "$NEW_DIR"
+  if [ -d "/opt/update_container.sh" ]; then
+    echo "Удаляем cкрипт в директории "/opt/update_container.sh""
+    rm -rf "/opt/update_container.sh"
   fi
   exit 1
 }
@@ -74,4 +73,4 @@ docker rm "$CONTAINER_NAME"
 echo "Запускаем контейнер..."
 docker run -d --name "$CONTAINER_NAME" --restart always --env-file "$ENV_FILE" "$CONTAINER_NAME"
 
-echo "Контейнер $CONTAINER_NAME успешно запущен."
+echo "Контейнер $CONTAINER_NAME успешно запущен." || rollback()
