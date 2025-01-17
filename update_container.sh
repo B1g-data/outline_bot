@@ -4,38 +4,32 @@
 REPO_URL="https://github.com/B1g-data/outline_bot.git"
 BRANCH="main"
 TARGET_DIR="/opt/tg_outline_bot"
-NEW_DIR="/opt/${CONTAINER_NAME}"
 
 # Получение списка контейнеров
 CONTAINERS=$(docker ps -a --filter "name=^tg_outline_bot" --format "{{.Names}}")
 
 # Функция отката изменений
 rollback() {
-  if [ -d "/opt/update_container.sh" ]; then
-    echo "Удаляем cкрипт в директории "/opt/update_container.sh""
-    rm -rf "/opt/update_container.sh"
-  fi
+  echo "Произошла ошибка. Откат изменений..."
   exit 1
 }
 
-# Запрос действия у пользователя
+# Проверка существующих контейнеров
 if [ -z "$CONTAINERS" ]; then
   echo "Нет существующих контейнеров для обновления."
   exit 1
 fi
 
+# Список контейнеров с нумерацией
 echo "Список существующих контейнеров:"
-# Нумерация контейнеров
 index=1
 for CONTAINER in $CONTAINERS; do
   echo "$index. $CONTAINER"
   ((index++))
 done
 
-# Запрос номера контейнера
+# Выбор контейнера
 read -p "Введите номер контейнера, который хотите обновить: " CONTAINER_NUMBER
-
-# Поиск имени контейнера по номеру
 CONTAINER_NAME=$(echo "$CONTAINERS" | sed -n "${CONTAINER_NUMBER}p")
 
 if [ -z "$CONTAINER_NAME" ]; then
@@ -45,32 +39,35 @@ fi
 
 echo "Вы выбрали контейнер: $CONTAINER_NAME"
 
-# Переходим в директорию
-cd "$NEW_DIR" 
+# Директория обновления
+NEW_DIR="/opt/${CONTAINER_NAME}"
 
-# Проверка, существует ли репозиторий в указанной директории
+# Проверка и обновление репозитория
 if [ -d "$NEW_DIR/.git" ]; then
   echo "Папка $NEW_DIR уже содержит репозиторий. Обновление содержимого..."
-  git -C "$NEW_DIR" pull origin "$BRANCH" Откат, если ошибка обновления репозитория
+  git -C "$NEW_DIR" pull origin "$BRANCH" || rollback
 else
   echo "Папка $NEW_DIR не содержит репозитория. Клонируем репозиторий..."
-  git clone -b "$BRANCH" --single-branch "$REPO_URL" "$NEW_DIR"  # Откат, если ошибка клонирования
+  git clone -b "$BRANCH" --single-branch "$REPO_URL" "$NEW_DIR" 
 fi
 
-echo "Репозиторий успешно обновлен."
+echo "Репозиторий успешно обновлён."
 
-echo "Собираем Docker-образ..."
-docker build -t "$CONTAINER_NAME" . # Откат, если ошибка сборки Docker-образа
+# Сборка Docker-образа
+echo "Собираем Docker-образ для $CONTAINER_NAME..."
+cd "$NEW_DIR" || rollback
+docker build -t "$CONTAINER_NAME" . || rollback
 
 echo "Docker-образ успешно собран."
 
 # Остановка и удаление старого контейнера
-echo "Останавливаем и удаляем старый контейнер: $CONTAINER_NAME..."
-docker stop "$CONTAINER_NAME"  
-docker rm "$CONTAINER_NAME"    
+echo "Останавливаем и удаляем старый контейнер $CONTAINER_NAME..."
+docker stop "$CONTAINER_NAME"
+docker rm "$CONTAINER_NAME"
 
 # Запуск нового контейнера
-echo "Запускаем контейнер..."
-docker run -d --name "$CONTAINER_NAME" --restart always --env-file "$ENV_FILE" "$CONTAINER_NAME"
+ENV_FILE="/opt/${CONTAINER_NAME}/.env" # Замените на актуальный путь
+echo "Запускаем новый контейнер $CONTAINER_NAME..."
+docker run -d --name "$CONTAINER_NAME" --restart always --env-file "$ENV_FILE" "$CONTAINER_NAME" || rollback
 
-echo "Контейнер $CONTAINER_NAME успешно запущен." || rollback()
+echo "Контейнер $CONTAINER_NAME успешно обновлён и запущен."
