@@ -4,7 +4,7 @@
 REPO_URL="https://github.com/B1g-data/outline_bot.git"
 BRANCH="main"
 TARGET_DIR="/opt/tg_outline_bot"
-ENV_FILE="${TARGET_DIR}/.env"
+NEW_DIR="/opt/${CONTAINER_NAME}"
 
 # Получение списка контейнеров
 CONTAINERS=$(docker ps -a --filter "name=^tg_outline_bot" --format "{{.Names}}")
@@ -45,9 +45,6 @@ if [ -z "$CONTAINER_NAME" ]; then
 fi
 
 echo "Вы выбрали контейнер: $CONTAINER_NAME"
-
-# Определение директории для репозитория
-NEW_DIR="/opt/${CONTAINER_NAME}"
 
 # Проверка, существует ли репозиторий в указанной директории
 if [ -d "$NEW_DIR/.git" ]; then
