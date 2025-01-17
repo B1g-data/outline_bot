@@ -46,32 +46,32 @@ fi
 
 echo "Вы выбрали контейнер: $CONTAINER_NAME"
 
+# Переходим в директорию
+cd "$NEW_DIR" 
+
 # Проверка, существует ли репозиторий в указанной директории
 if [ -d "$NEW_DIR/.git" ]; then
   echo "Папка $NEW_DIR уже содержит репозиторий. Обновление содержимого..."
-  git -C "$NEW_DIR" pull origin "$BRANCH" || rollback  # Откат, если ошибка обновления репозитория
+  git -C "$NEW_DIR" pull origin "$BRANCH" Откат, если ошибка обновления репозитория
 else
   echo "Папка $NEW_DIR не содержит репозитория. Клонируем репозиторий..."
-  git clone -b "$BRANCH" --single-branch "$REPO_URL" "$NEW_DIR" || rollback  # Откат, если ошибка клонирования
+  git clone -b "$BRANCH" --single-branch "$REPO_URL" "$NEW_DIR"  # Откат, если ошибка клонирования
 fi
 
 echo "Репозиторий успешно обновлен."
 
-# Сборка и запуск контейнера
-cd "$NEW_DIR" || rollback  # Откат, если ошибка перехода в директорию
-
 echo "Собираем Docker-образ..."
-docker build -t "$CONTAINER_NAME" . || rollback  # Откат, если ошибка сборки Docker-образа
+docker build -t "$CONTAINER_NAME" . # Откат, если ошибка сборки Docker-образа
 
 echo "Docker-образ успешно собран."
 
 # Остановка и удаление старого контейнера
 echo "Останавливаем и удаляем старый контейнер: $CONTAINER_NAME..."
-docker stop "$CONTAINER_NAME" || rollback  # Откат, если ошибка остановки контейнера
-docker rm "$CONTAINER_NAME" || rollback   # Откат, если ошибка удаления контейнера
+docker stop "$CONTAINER_NAME"  
+docker rm "$CONTAINER_NAME"    
 
 # Запуск нового контейнера
 echo "Запускаем контейнер..."
-docker run -d --name "$CONTAINER_NAME" --restart always --env-file "$ENV_FILE" "$CONTAINER_NAME" || rollback  # Откат, если ошибка запуска контейнера
+docker run -d --name "$CONTAINER_NAME" --restart always --env-file "$ENV_FILE" "$CONTAINER_NAME"
 
 echo "Контейнер $CONTAINER_NAME успешно запущен."
